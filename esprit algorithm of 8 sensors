@@ -1,0 +1,45 @@
+clc;
+clear;
+close all;
+j=sqrt(-1);
+lambda=1;
+dt=lambda/2;
+M=8;
+N=100;
+n=3;
+SNR=20;
+f=[30 31 32];
+fs=100;
+theta=[85 90 95];
+m2=4;      % 此处越小，效果越好
+m1=M-m2;
+for k=1:200
+    for i=1:n
+        s(i,:)=10^(SNR/20)*exp(j*2*pi*f(i)/fs*(1:N));
+    end
+    n1=(randn(M,N)+j*randn(M,N))*sqrt(0.5);
+    d=0:dt:(M-1)*dt;
+    A=exp(j*2*pi*d'*cos(theta*pi/180));
+    x=A*s+n1;
+    Rx=x*x'/(N);
+    [V,D]=eig(Rx);
+    U=V(:,M-n+1:M);
+    Us1=U(1:m1,:);
+    Us2=U(2:m1+1,:);
+    Us=[Us1 Us2];
+    Us=Us'*Us;
+    [V1,D1]=eig(Us);
+    Un1=V1(1:n,1:n);
+    Un2=V1(n+1:2*n,1:n);
+    psai=-Un1*inv(Un2);
+    [V3,D3]=eig(psai);
+    for i=1:3
+        phase(k,i)=acos(angle(D3(i,i))/pi)*180/pi;
+    end
+    phase(k,:)=sort(phase(k,:));
+end
+plot(phase(:,1),'linewidth',1.5);grid;hold on;
+plot(phase(:,2),'linewidth',1.5);grid;hold on;
+plot(phase(:,3),'linewidth',1.5);grid;hold on;
+ylim([0 180]);
+ylabel('DOA估计-（85 90 95）');xlabel('\theta(\circ)');title('ESPRIT-8阵元');
